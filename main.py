@@ -1,8 +1,36 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from database import engine, Base
 from routes import user, car, booking, auth
-
+import time
+from utils.logger import logger
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import SQLAlchemyError
 app = FastAPI()
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    logger.info(f"{request.method} {request.url} - {response.status_code} - {process_time:.2f}s")
+    return response
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Erreur serveur: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Une erreur interne s'est produite"})
+
+@app.exception_handler(SQLAlchemyError)
+async def database_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error(f"Erreur base de données: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Erreur de base de données"})
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(f"Erreur de validation: {exc.errors()}")
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 @app.on_event("startup")
 async def create_tables():

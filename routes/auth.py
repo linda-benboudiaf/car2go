@@ -61,7 +61,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
-    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
+    if not user or not pwd_context.verify(form_data.password, user.hash_password(form_data.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"

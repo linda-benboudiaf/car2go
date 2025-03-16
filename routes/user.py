@@ -6,7 +6,7 @@ from database import get_db
 from models.user import User
 from schemas.user import UserCreate, UserResponse, UserUpdate
 from passlib.context import CryptContext
-
+from utils.logger import logger
 
 router = APIRouter(prefix="/users", tags=["Users"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -14,6 +14,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 @router.post("/", response_model=UserCreate)
 async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     if user.role not in ["apprenti", "accompagnateur"]:
+        logger.error(f"User {user.id} not allowed")
         raise HTTPException(status_code=400, detail="Le rôle doit être 'apprenti' ou 'accompagnateur'.")
 
     if user.role == "accompagnateur" and not user.numero_permis:
@@ -46,6 +47,7 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db), current_use
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar()
     if not user:
+        logger.warning(f"User {user_id} n'existe pas endpoint: get_user")
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     return user
 
@@ -60,9 +62,14 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     result = await db.execute(select(User).filter(User.id == user_id))
     existing_user = result.scalar()
     if not existing_user:
+        logger.error(f"User {user_id} n'existe pas")
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
+    if isinstance(current_user, dict):
+        current_user = User(**current_user)
+
     if current_user.id != user_id:
+        logger.error(f"User {user_id} n'existe pas endpoint: update_user")
         raise HTTPException(status_code=403, detail="Accès interdit")
 
     for key, value in user.model_dump().items():
@@ -79,7 +86,11 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db), current_
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
+    if isinstance(current_user, dict):
+        current_user = User(**current_user)
+
     if current_user.id != user_id:
+        logger.error(f"User {user_id} n'existe pas endpoint: delete_user")
         raise HTTPException(status_code=403, detail="Accès interdit")
 
     await db.delete(user)
