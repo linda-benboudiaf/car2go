@@ -1,0 +1,47 @@
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+venv/
+env/
+*.venv
+
+# Fichiers de configuration et logs
+*.log
+*.sqlite3
+*.db
+
+# Dépendances installées
+pip-log.txt
+pip-delete-this-directory.txt
+
+# JetBrains (PyCharm)
+.idea/
+
+# VS Code
+.vscode/
+
+# Fichiers temporaires de l'éditeur
+*.swp
+*.swo
+
+# Clés et certificats
+*.pem
+*.key
+
+# Variables d'environnement et secrets
+.env
+*.env
+
+# Dossiers et fichiers générés par tests
+.tox/
+.nox/
+.coverage
+htmlcov/
+pytest_cache/
+
+# Caches de l'OS
+.DS_Store
+Thumbs.db
