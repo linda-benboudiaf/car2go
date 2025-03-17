@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
-from schemas.auth import UserRegister, TokenResponse, UserLogin
+from schemas.auth import UserRegister, TokenResponse
 from utils.auth import create_access_token, verify_token
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -37,6 +36,7 @@ async def register(user: UserRegister, db: AsyncSession = Depends(get_db)):
         nom=user.nom,
         prenom=user.prenom,
         email=user.email,
+        password=hashed_password,
         telephone=user.telephone,
         adresse=user.adresse,
         date_naissance=user.date_naissance,
@@ -44,7 +44,6 @@ async def register(user: UserRegister, db: AsyncSession = Depends(get_db)):
         license_date=user.license_date,
         numero_permis=user.numero_permis if user.role == "accompagnateur" else None,
         numero_livret=user.numero_livret if user.role == "apprenti" else None,
-        hashed_password=hashed_password
     )
 
     db.add(new_user)
@@ -85,4 +84,4 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return {"id": user.id, "nom": user.nom, "prenom": user.prenom, "email": user.email}
+    return {"id": user.id, "nom": user.nom, "prenom": user.prenom, "email": user.email, "role": user.role}

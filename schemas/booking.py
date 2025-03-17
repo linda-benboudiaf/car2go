@@ -21,6 +21,9 @@ class BookingUpdate(BaseModel):
 class BookingResponse(BookingBase):
     id: int
     status: str
+    purpose : str
+    start_time : datetime
+    end_time : datetime
     created_at: datetime
     updated_at: datetime
 

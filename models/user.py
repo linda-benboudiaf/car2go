@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Date, CheckConstraint
 from database import Base
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
+from sqlalchemy import ForeignKey
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -40,3 +41,16 @@ class User(Base):
 
     )
     bookings = relationship("Booking", back_populates="user")
+
+
+class ApprentiAccompagnateur(Base):
+    __tablename__ = "apprenti_accompagnateur"
+
+    id = Column(Integer, primary_key=True, index=True)
+    apprenti_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    accompagnateur_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    lien = Column(String(100), nullable=False)  # Champ libre pour indiquer la relation
+
+    # Relation avec la table users
+    apprenti = relationship("User", foreign_keys=[apprenti_id])
+    accompagnateur = relationship("User", foreign_keys=[accompagnateur_id])

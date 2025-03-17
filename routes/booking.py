@@ -4,6 +4,7 @@ from models.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models.booking import Booking
+from models.car import Car
 from schemas.booking import BookingCreate, BookingUpdate, BookingResponse
 from database import get_db
 from datetime import datetime
@@ -31,11 +32,70 @@ async def get_all_bookings(db: AsyncSession = Depends(get_db), current_user: Use
     bookings = result.scalars().all()
     return bookings
 
+# Récupérer les réservations par user_id
+@router.get("/user")
+async def get_bookings_by_user(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Non autorisé")
+
+    # Vérifier si current_user est un dict et le convertir en User
+    if isinstance(current_user, dict):
+        current_user = User(**current_user)
+
+    # Jointure entre Booking et Car pour obtenir plus d'infos
+    result = await db.execute(
+        select(Booking, Car)
+        .join(Car, Booking.car_id == Car.id)
+        .filter(Booking.user_id == current_user.id)
+    )
+
+    bookings = result.all()
+
+    print(bookings)
+
+    # Transformation des résultats en un format plus complet
+    bookings_list = [
+        {
+            "id": booking.Booking.id,
+            "user_id": booking.Booking.user_id,
+            "car_id": booking.Booking.car_id,
+            "start_time": booking.Booking.start_time,
+            "end_time": booking.Booking.end_time,
+            "purpose": booking.Booking.purpose,
+            "status": booking.Booking.status,
+            "created_at": booking.Booking.created_at,
+            "updated_at": booking.Booking.updated_at,
+            "car": {  # Ajout des infos de la voiture
+                "id": booking.Car.id,
+                "nom": booking.Car.nom,
+                "modele": booking.Car.modele,
+                "annee_fab": booking.Car.annee_fab,
+                "type": booking.Car.type,
+                "plaque": booking.Car.plaque,
+                "controle_technique": booking.Car.controle_technique,
+                "prix_par_heure": booking.Car.prix_par_heure,
+                "disponible": booking.Car.disponible,
+                "image_url": booking.Car.image_url,
+            }
+        }
+        for booking in bookings
+    ]
+
+
+    return bookings_list
+
 # Récupérer une réservation par ID
 @router.get("/{booking_id}", response_model=BookingResponse)
 async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if isinstance(current_user, dict):
+        current_user = User(**current_user)
+
     if not current_user:
         raise HTTPException(status_code=401, detail="Non autorisé")
+
     result = await db.execute(select(Booking).filter(Booking.id == booking_id))
     booking = result.scalars().first()
     if not booking:

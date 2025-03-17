@@ -23,6 +23,15 @@ class CarUpdate(BaseModel):
 
 class CarResponse(CarBase):
     id: int
+    nom: str
+    modele: str
+    annee_fab: int
+    type: str
+    plaque: str
+    controle_technique: date
+    prix_par_heure: float
+    disponible: bool
+    image_url: str
     created_at: date
     updated_at: date
 

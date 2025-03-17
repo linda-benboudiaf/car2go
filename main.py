@@ -6,6 +6,8 @@ from utils.logger import logger
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
 
 @app.middleware("http")
@@ -16,6 +18,14 @@ async def log_requests(request: Request, call_next):
     logger.info(f"{request.method} {request.url} - {response.status_code} - {process_time:.2f}s")
     return response
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
