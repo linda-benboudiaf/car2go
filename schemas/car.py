@@ -16,7 +16,8 @@ class CarCreate(CarBase):
 class CarUpdate(BaseModel):
     nom: Optional[str] = None
     modele: Optional[str] = None
-    annee_fabrication: Optional[int] = None
+    # Use the same field name as the database model to ensure updates work correctly
+    annee_fab: Optional[int] = None
     type: Optional[str] = None
     plaque: Optional[str] = None
     controle_technique: Optional[date] = None
@@ -31,7 +32,8 @@ class CarResponse(CarBase):
     controle_technique: date
     prix_par_heure: float
     disponible: bool
-    image_url: str
+    # image_url may be NULL in the database
+    image_url: Optional[str] = None
     created_at: date
     updated_at: date
 
