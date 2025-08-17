@@ -29,7 +29,7 @@ def client():
                 password="hashed",
                 telephone="1234567890",
                 adresse="123 Street",
-                date_naissance=datetime.utcnow().date(),
+                date_naissance=datetime(1990, 1, 1).date(),
                 role="apprenti",
                 numero_livret="ABC123",
             )
