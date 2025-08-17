@@ -17,7 +17,23 @@ router = APIRouter(prefix="/bookings", tags=["Réservations"])
 async def create_booking(booking: BookingCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(status_code=401, detail="Non autorisé")
-    new_booking = Booking(**booking.dict(), status="confirmée", created_at=datetime.utcnow(), updated_at=datetime.utcnow())
+    # Vérifier les conflits de réservation pour la même voiture
+    conflict_stmt = select(Booking).where(
+        Booking.car_id == booking.car_id,
+        Booking.end_time > booking.start_time,
+        Booking.start_time < booking.end_time,
+    )
+    result = await db.execute(conflict_stmt)
+    conflict = result.scalars().first()
+    if conflict:
+        raise HTTPException(status_code=400, detail="Car is already booked for the selected time range")
+
+    new_booking = Booking(
+        **booking.dict(),
+        status="confirmée",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
     db.add(new_booking)
     await db.commit()
     await db.refresh(new_booking)
